@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { AppService } from './app.service';
       synchronize: true,
       logging: true, // SQL 쿼리 로깅만 활성화
     }),
-    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
