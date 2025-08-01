@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import * as dotenv from 'dotenv';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import * as session from 'express-session';
 import * as passport from 'passport';
@@ -36,9 +37,24 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Swagger 설정
+  const config = new DocumentBuilder()
+    .setTitle('LabCellBio API')
+    .setDescription('LabCellBio 백엔드 API 문서')
+    .setVersion('1.0')
+    .addTag('uploads', '파일 업로드 관련 API')
+    .addTag('auth', '인증 관련 API')
+    .addTag('admin', '관리자 관련 API')
+    .addBearerAuth()
+    .build();
+  
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+
   await app.listen(3000, '0.0.0.0');
 
   logger.log('✅ 서버가 포트 3000에서 실행 중입니다.');
   logger.log('✅ 데이터베이스 연결 확인 완료');
+  logger.log('📚 Swagger 문서: http://localhost:3000/api');
 }
 bootstrap();

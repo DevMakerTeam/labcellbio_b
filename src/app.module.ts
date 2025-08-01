@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
       logging: true, // SQL 쿼리 로깅만 활성화
     }),
     AuthModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
