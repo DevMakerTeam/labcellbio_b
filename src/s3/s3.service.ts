@@ -1,7 +1,7 @@
 // src/uploads/s3.service.ts
 
 import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuid } from 'uuid';
 import { ConfigService } from '@nestjs/config';
@@ -63,6 +63,26 @@ export class S3Service {
     }
   }
 
+  // S3에서 파일 삭제
+  async deleteFile(s3Key: string): Promise<boolean> {
+    try {
+      this.logger.log(`🗑️ S3 파일 삭제 시작 - Key: ${s3Key}`);
+      
+      await this.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: s3Key,
+        })
+      );
+
+      this.logger.log(`✅ S3 파일 삭제 완료 - Key: ${s3Key}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`❌ S3 파일 삭제 실패: ${error.message}`);
+      throw error;
+    }
+  }
+
   // Presigned URL 생성 (업로드용)
   async getPresignedUrl(filename: string, contentType: string): Promise<{ uploadUrl: string; fileUrl: string; s3Key: string }> {
     try {
@@ -99,13 +119,5 @@ export class S3Service {
     }
   }
 
-  // Presigned URL 생성 (다운로드용)
-  async getPresignedDownloadUrl(key: string): Promise<string> {
-    const command = new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    });
 
-    return await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
-  }
 }

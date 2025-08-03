@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { BoardImage } from './board-image.entity';
 
 @Entity('board')
 export class Board {
@@ -52,6 +54,14 @@ export class Board {
     nullable: true,
   })
   thumbnailUrl?: string;
+
+  @ApiProperty({
+    description: '게시글에 포함된 이미지들',
+    type: () => [BoardImage],
+    required: false
+  })
+  @OneToMany(() => BoardImage, boardImage => boardImage.board)
+  boardImages: BoardImage[];
 
   @ApiProperty({
     description: '생성일시',

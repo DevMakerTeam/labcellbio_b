@@ -26,6 +26,9 @@ export class Upload {
   @Column({ default: false })
   isDeleted: boolean;
 
+  @Column({ nullable: true })
+  boardId?: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Query, Body, UseInterceptors, UploadedFile, Param, Delete } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Query, Body, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody, ApiConsumes, ApiParam } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
 import { UploadsService } from './uploads.service';
-import { CompleteUploadDto, UploadResponseDto, EditorUploadResponseDto, PresignedUrlDto } from './dto/upload.dto';
+import { CompleteUploadDto, CompleteUploadResponseDto, PresignedUrlDto } from './dto/upload.dto';
 
 @ApiTags('uploads')
 @Controller('uploads')
@@ -13,7 +12,8 @@ export class UploadsController {
     private readonly uploadsService: UploadsService,
   ) {}
 
-  // 환경 변수 테스트
+  // 환경 변수 테스트 - 개발용으로 주석 처리
+  /*
   @Get('test-config')
   @ApiOperation({ summary: '환경 변수 상태 확인', description: 'AWS 환경 변수 설정 상태를 확인합니다.' })
   @ApiResponse({ status: 200, description: '환경 변수 상태 반환' })
@@ -30,6 +30,7 @@ export class UploadsController {
       timestamp: new Date().toISOString()
     };
   }
+  */
 
   // Presigned URL 생성 (텍스트 에디터용)
   @Get('presigned-url')
@@ -49,29 +50,30 @@ export class UploadsController {
   @Post('complete-upload')
   @ApiOperation({ summary: '업로드 완료 처리', description: 'Presigned URL로 업로드 완료 후 DB에 저장합니다.' })
   @ApiBody({ type: CompleteUploadDto })
-  @ApiResponse({ status: 201, description: '업로드 완료', type: UploadResponseDto })
+  @ApiResponse({ status: 201, description: '업로드 완료', type: CompleteUploadResponseDto })
   async completeUpload(@Body() uploadData: CompleteUploadDto) {
-    // 영구 URL로 변환 (S3Key 기반)
+    // S3에 이미 업로드된 파일의 영구 URL 생성
     const region = process.env.AWS_REGION || 'ap-northeast-2';
     const bucket = process.env.AWS_S3_BUCKET || 'labcellbio-images';
     const permanentUrl = `https://${bucket}.s3.${region}.amazonaws.com/${uploadData.s3Key}`;
     
-    // 영구 URL로 업데이트
-    const uploadDataWithPermanentUrl = {
+    // DB에 저장 (영구 URL 포함)
+    const upload = await this.uploadsService.createUpload({
       ...uploadData,
       fileUrl: permanentUrl
-    };
+    });
     
-    const upload = await this.uploadsService.createUpload(uploadDataWithPermanentUrl);
     return { 
       success: true, 
+      uploadId: upload.id,
       upload,
       permanentUrl,
       message: '업로드가 완료되었습니다.'
     };
   }
 
-  // 직접 파일 업로드 (기존 방식)
+  // 직접 파일 업로드 (기존 방식) - Presigned URL 방식으로 사용용
+  /*
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: '파일 직접 업로드', description: '백엔드를 통해 S3에 파일을 직접 업로드합니다.' })
@@ -124,69 +126,8 @@ export class UploadsController {
       mimetype: file.mimetype
     };
   }
+  */
 
-  // 텍스트 에디터용 이미지 업로드 (영구 저장)
-  @Post('editor-upload')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: '텍스트 에디터용 이미지 업로드', description: '텍스트 에디터에서 사용할 이미지를 영구 저장합니다.' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: '업로드할 이미지 파일 (JPEG, PNG, GIF, WebP)'
-        }
-      }
-    }
-  })
-  @ApiResponse({ status: 201, description: '업로드 성공', type: EditorUploadResponseDto })
-  @ApiResponse({ status: 400, description: '지원하지 않는 파일 형식' })
-  async uploadForEditor(@UploadedFile() file: any) {
-    // 파일 검증
-    if (!file) {
-      throw new Error('파일이 업로드되지 않았습니다.');
-    }
-
-    // 이미지 파일 타입 검증
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      throw new Error('지원하지 않는 이미지 형식입니다. (JPEG, PNG, GIF, WebP만 지원)');
-    }
-
-    console.log('📝 텍스트 에디터 이미지 업로드:', {
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      buffer: file.buffer ? '있음' : '없음'
-    });
-
-    // S3에 영구 업로드
-    const fileUrl = await this.s3Service.uploadImage(file);
-    
-    // DB에 업로드 정보 저장
-    const upload = await this.uploadsService.createUpload({
-      filename: file.filename || `${Date.now()}-${file.originalname}`,
-      originalName: file.originalname,
-      fileUrl,
-      s3Key: `images/${file.filename || `${Date.now()}-${file.originalname}`}`,
-      contentType: file.mimetype,
-      fileSize: file.size,
-    });
-
-    // 텍스트 에디터용 응답 형식
-    return { 
-      success: true, 
-      url: fileUrl, // 영구 URL
-      filename: file.originalname,
-      size: file.size,
-      mimetype: file.mimetype,
-      uploadId: upload.id,
-      message: '이미지가 성공적으로 업로드되었습니다.'
-    };
-  }
 
   // 업로드된 파일 목록 조회
   @Get()
@@ -217,13 +158,5 @@ export class UploadsController {
     return { success: true, message: '파일이 삭제되었습니다.' };
   }
 
-  // 다운로드용 Presigned URL 생성
-  @Get('download-url')
-  @ApiOperation({ summary: '다운로드용 Presigned URL 생성', description: '파일 다운로드용 Presigned URL을 생성합니다.' })
-  @ApiQuery({ name: 'key', description: 'S3 파일 키', example: 'images/uuid-image.jpg' })
-  @ApiResponse({ status: 200, description: '다운로드 URL 생성 성공' })
-  async getDownloadUrl(@Query('key') key: string) {
-    const downloadUrl = await this.s3Service.getPresignedDownloadUrl(key);
-    return { downloadUrl };
-  }
+
 }

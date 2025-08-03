@@ -175,7 +175,7 @@ export class BoardController {
       properties: {
         message: {
           type: 'string',
-          example: '게시글이 성공적으로 삭제되었습니다.'
+          example: '게시글과 관련 이미지들이 성공적으로 삭제되었습니다.'
         }
       }
     }

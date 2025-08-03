@@ -4,12 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Admin } from '../admin/admin.entity';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(Admin)
     private adminRepo: Repository<Admin>,
+    private jwtService: JwtService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -24,5 +26,10 @@ export class AuthService {
 
   async findUserById(id: number) {
     return this.adminRepo.findOneBy({ id });
+  }
+
+  async generateToken(user: any) {
+    const payload = { username: user.username, sub: user.id };
+    return this.jwtService.sign(payload);
   }
 }

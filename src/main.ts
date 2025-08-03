@@ -4,9 +4,6 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import * as session from 'express-session';
-import * as passport from 'passport';
-
 async function bootstrap() {
   dotenv.config();
 
@@ -17,35 +14,29 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe()); // ★ 이게 있어야 유효성 검사 작동
   // ✅ CORS 설정
   app.enableCors({
-    origin: true, // 또는 'http://localhost:3000'
+    // origin: true, // 또는 'http://localhost:3000'
+    origin: 'http://localhost:3000', 
     credentials: true, // ✔️ 이거 중요!
   });
-
-  // 세션 미들웨어 등록
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'default-secret-key',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 1000 * 60 * 60, // 1시간
-      },
-    }),
-  );
-
-  // passport 초기화 및 세션 사용
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   // Swagger 설정
   const config = new DocumentBuilder()
     .setTitle('LabCellBio API')
-    .setDescription('LabCellBio 백엔드 API 문서')
     .setVersion('1.0')
+    .addTag('인증 (Authentication)', 'JWT 기반 인증 관련 API')
     .addTag('uploads', '파일 업로드 관련 API')
-    .addTag('auth', '인증 관련 API')
     .addTag('board', '게시판 관련 API')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'JWT 토큰을 입력하세요. 로그인 API에서 발급받은 accessToken을 사용합니다.',
+        in: 'header',
+      },
+      'bearer'
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -57,4 +48,5 @@ async function bootstrap() {
   logger.log('✅ 데이터베이스 연결 확인 완료');
   logger.log('📚 Swagger 문서: http://localhost:3000/api');
 }
+
 bootstrap();
