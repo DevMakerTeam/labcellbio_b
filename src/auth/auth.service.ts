@@ -20,7 +20,7 @@ export class AuthService {
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) return null;
     // 비밀번호 맞으면 user 정보 리턴 (비밀번호 제외)
-    const { password: _password, ...result } = user;
+    const { password: _unusedPassword, ...result } = user;
     return result;
   }
 
@@ -29,7 +29,10 @@ export class AuthService {
   }
 
   generateToken(user: any) {
-    const payload = { username: user.username as string, sub: user.id as number };
+    const payload = { 
+      username: (user as any).username as string, 
+      sub: (user as any).id as number 
+    };
     return this.jwtService.sign(payload);
   }
 }

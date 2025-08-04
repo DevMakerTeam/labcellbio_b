@@ -34,7 +34,7 @@ export class AuthController {
     }
   })
   @ApiResponse({ status: 500, description: '서버 오류' })
-  async login(@Req() req: Request, @Res() res: Response) {
+  login(@Req() req: Request, @Res() res: Response) {
     if (!req.user) {
       return res
         .status(401)
@@ -91,7 +91,7 @@ export class AuthController {
   })
   status(@Req() req: Request) {
     // JWT 가드를 통과했다면 이미 인증된 상태
-    const { password: _password, ...userWithoutPassword } = req.user as any;
+    const { password: _unusedPassword, ...userWithoutPassword } = req.user as any;
     return { loggedIn: true, user: userWithoutPassword };
   }
 }
