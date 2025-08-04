@@ -67,6 +67,7 @@ GitHub Actions에서 사용할 IAM 사용자는 다음 권한이 필요합니다
 }
 ```
 
+
 ## 보안 주의사항
 
 1. **Access Key 관리**: IAM 사용자의 Access Key는 정기적으로 교체
