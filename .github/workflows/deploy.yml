@@ -1,0 +1,135 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --retries=3
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+      env:
+        DB_HOST: localhost
+        DB_PORT: 3306
+        DB_USERNAME: root
+        DB_PASSWORD: test_password
+        DB_DATABASE: test_db
+        JWT_SECRET: test_jwt_secret
+        JWT_EXPIRES_IN: 1d
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Copy files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT }}
+        source: "."
+        target: "/home/ec2-user/app"
+        strip_components: 0
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT }}
+        script: |
+          # Update system
+          sudo yum update -y
+          
+          # Install Docker if not installed
+          if ! command -v docker &> /dev/null; then
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -a -G docker ec2-user
+          fi
+          
+          # Install Docker Compose if not installed
+          if ! command -v docker-compose &> /dev/null; then
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+          
+          # Navigate to app directory
+          cd /home/ec2-user/app
+          
+          # Stop existing containers
+          if [ -f docker-compose.yml ]; then
+            docker-compose down
+          fi
+          
+          # Clean up old images
+          docker image prune -f
+          
+          # Create docker-compose.yml
+          cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          services:
+            app:
+              build: .
+              container_name: labcellbio-backend
+              restart: unless-stopped
+              ports:
+                - "3000:3000"
+              environment:
+                - DB_HOST=${{ secrets.DB_HOST }}
+                - DB_PORT=${{ secrets.DB_PORT }}
+                - DB_USERNAME=${{ secrets.DB_USERNAME }}
+                - DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+                - DB_DATABASE=${{ secrets.DB_DATABASE }}
+                - JWT_SECRET=${{ secrets.JWT_SECRET }}
+                - JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+                - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+                - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                - AWS_REGION=${{ secrets.AWS_REGION }}
+                - AWS_S3_BUCKET=${{ secrets.AWS_S3_BUCKET }}
+              healthcheck:
+                test: ["CMD", "node", "healthcheck.js"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+          EOF
+          
+          # Build and start containers
+          docker-compose up -d --build
+          
+          # Show logs
+          docker-compose logs app 
