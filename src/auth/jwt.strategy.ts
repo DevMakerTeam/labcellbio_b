@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     console.log('🔐 JWT 전략 - 페이로드:', payload);
-    const user = await this.authService.findUserById(payload.sub);
+    const user = await this.authService.findUserById(payload.sub as number);
     if (!user) {
       console.log('❌ JWT 전략 - 사용자를 찾을 수 없음 (ID):', payload.sub);
       return null;

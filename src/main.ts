@@ -49,4 +49,7 @@ async function bootstrap() {
   logger.log('📚 Swagger 문서: http://localhost:3000/api');
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('애플리케이션 시작 실패:', error);
+  process.exit(1);
+});
