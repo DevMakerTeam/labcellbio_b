@@ -90,9 +90,9 @@ jobs:
            npm run build
            
            # Check if build was successful
-           if [ ! -f "dist/main.js" ]; then
-             echo "Build failed: dist/main.js not found"
-             ls -la dist/ || echo "dist directory not found"
+           if [ ! -f "dist/src/main.js" ]; then
+             echo "Build failed: dist/src/main.js not found"
+             ls -la dist/src/ || echo "dist/src directory not found"
              exit 1
            fi
            
@@ -115,7 +115,7 @@ jobs:
            EOF
            
            # Start application with PM2
-           pm2 start dist/main.js --name labcellbio-backend --env production
+           pm2 start dist/src/main.js --name labcellbio-backend --env production
            
            # Save PM2 configuration
            pm2 save
