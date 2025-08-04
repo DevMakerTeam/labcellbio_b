@@ -99,8 +99,8 @@ jobs:
            # Install only production dependencies
            npm ci --omit=dev --legacy-peer-deps
            
-           # Create .env file
-           cat > .env << EOF
+           # Create .env.local file
+           cat > .env.local << EOF
            DB_HOST=${{ secrets.DB_HOST }}
            DB_PORT=${{ secrets.DB_PORT }}
            DB_USERNAME=${{ secrets.DB_USERNAME }}
