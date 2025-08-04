@@ -16,7 +16,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Install dependencies
@@ -58,11 +58,11 @@ jobs:
            # Update system
            sudo apt-get update -y
            
-           # Install Node.js if not installed
-           if ! command -v node &> /dev/null; then
-             curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-             sudo apt-get install -y nodejs
-           fi
+                       # Install Node.js 20 if not installed or if version is lower than 20
+            if ! command -v node &> /dev/null || ! node --version | grep -q "v2[0-9]"; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
            
            # Install PM2 for process management
            if ! command -v pm2 &> /dev/null; then
@@ -80,14 +80,21 @@ jobs:
            pm2 stop labcellbio-backend || true
            pm2 delete labcellbio-backend || true
            
-           # Install all dependencies (including dev dependencies for build)
-           npm ci
-           
-           # Build the application
-           npm run build
-           
-           # Install only production dependencies
-           npm ci --omit=dev
+                       # Install all dependencies (including dev dependencies for build)
+            npm ci
+            
+            # Build the application
+            npm run build
+            
+            # Check if build was successful
+            if [ ! -f "dist/main.js" ]; then
+              echo "Build failed: dist/main.js not found"
+              ls -la dist/ || echo "dist directory not found"
+              exit 1
+            fi
+            
+            # Install only production dependencies
+            npm ci --omit=dev
            
            # Create .env file
            cat > .env << 'EOF'
