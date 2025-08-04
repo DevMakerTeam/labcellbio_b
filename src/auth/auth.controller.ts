@@ -42,7 +42,7 @@ export class AuthController {
     }
 
     // JWT 토큰 생성
-    const accessToken = await this.authService.generateToken(req.user);
+    const accessToken = this.authService.generateToken(req.user);
     
     return res.status(201).json({
       message: '로그인 성공',
@@ -91,7 +91,7 @@ export class AuthController {
   })
   status(@Req() req: Request) {
     // JWT 가드를 통과했다면 이미 인증된 상태
-    const { password: _unused, ...userWithoutPassword } = req.user as any;
+    const { password: _password, ...userWithoutPassword } = req.user as any;
     return { loggedIn: true, user: userWithoutPassword };
   }
 }

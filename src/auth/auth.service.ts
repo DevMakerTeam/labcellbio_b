@@ -20,7 +20,7 @@ export class AuthService {
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) return null;
     // 비밀번호 맞으면 user 정보 리턴 (비밀번호 제외)
-    const { password: _unused, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -28,7 +28,7 @@ export class AuthService {
     return this.adminRepo.findOneBy({ id });
   }
 
-  async generateToken(user: any) {
+  generateToken(user: any) {
     const payload = { username: user.username as string, sub: user.id as number };
     return this.jwtService.sign(payload);
   }
