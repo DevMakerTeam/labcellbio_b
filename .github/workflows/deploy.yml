@@ -44,7 +44,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: ${{ secrets.EC2_PORT }}
         source: "."
-        target: "/home/ec2-user/app"
+        target: "/home/ubuntu/app"
         strip_components: 0
 
     - name: Deploy to EC2
