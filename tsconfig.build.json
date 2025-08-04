@@ -1,4 +1,13 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "declaration": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "removeComments": true,
+    "noEmit": false
+  },
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
