@@ -35,6 +35,11 @@ export class BoardService {
     // thumbnail과 authorImage의 boardId 업데이트
     await this.updateImageBoardId(savedBoard);
     
+    // 텍스트 에디터에서 업로드된 이미지들을 BoardImage에 연결
+    if (dto.boardImages && dto.boardImages.length > 0) {
+      await this.createBoardImages(savedBoard.id, dto.boardImages);
+    }
+    
     return savedBoard;
   }
 
@@ -44,6 +49,15 @@ export class BoardService {
     
     // thumbnail과 authorImage의 boardId 업데이트
     await this.updateImageBoardId(updatedBoard);
+    
+    // 텍스트 에디터에서 업로드된 이미지들을 BoardImage에 연결
+    if (dto.boardImages && dto.boardImages.length > 0) {
+      // 기존 BoardImage 연결 삭제
+      await this.boardImageRepository.delete({ boardId: id });
+      
+      // 새로운 BoardImage 연결 생성
+      await this.createBoardImages(id, dto.boardImages);
+    }
     
     return updatedBoard;
   }
@@ -185,6 +199,40 @@ export class BoardService {
     } catch (error) {
       console.error('URL 파싱 실패:', url, error);
       return null;
+    }
+  }
+
+  /**
+   * 텍스트 에디터에서 업로드된 이미지들의 upload ID를 받아서 BoardImage에 연결하는 메서드
+   */
+  private async createBoardImages(boardId: number, uploadIds: number[]): Promise<void> {
+    try {
+      for (const uploadId of uploadIds) {
+        // upload 테이블에서 해당 uploadId를 가진 레코드 찾기
+        const upload = await this.uploadRepository.findOne({
+          where: { id: uploadId, isDeleted: false }
+        });
+
+        if (upload) {
+          // upload의 boardId 업데이트
+          await this.uploadRepository.update(
+            { id: uploadId },
+            { boardId }
+          );
+
+          // BoardImage 테이블에 연결 생성
+          await this.boardImageRepository.save({
+            boardId,
+            uploadId
+          });
+
+          console.log(`이미지 연결 완료: boardId ${boardId}, uploadId ${uploadId}`);
+        } else {
+          console.warn(`업로드 정보를 찾을 수 없음: uploadId ${uploadId}`);
+        }
+      }
+    } catch (error) {
+      console.error('BoardImage 생성 중 오류:', error);
     }
   }
 }

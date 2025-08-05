@@ -91,7 +91,8 @@ export class BoardController {
             title: '게시글 제목',
             description: '게시글 설명',
             content: '게시글 내용입니다.',
-            thumbnail: 'https://example.com/thumbnail.jpg'
+            thumbnail: 'https://example.com/thumbnail.jpg',
+            boardImages: [1, 2, 3]
           }
       }
     }
@@ -135,7 +136,8 @@ export class BoardController {
           title: '수정된 제목',
           description: '수정된 설명',
           content: '수정된 내용입니다.',
-          thumbnail: 'https://example.com/new-thumbnail.jpg'
+          thumbnail: 'https://example.com/new-thumbnail.jpg',
+          boardImages: [1, 2, 3]
         }
       }
     }

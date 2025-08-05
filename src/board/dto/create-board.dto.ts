@@ -62,4 +62,13 @@ export class CreateBoardDto {
   @IsString({ message: '썸네일 URL은 문자열이어야 합니다.' })
   @MaxLength(500, { message: '썸네일 URL은 500자를 초과할 수 없습니다.' })
   thumbnail?: string;
+
+  @ApiProperty({
+    description: '텍스트 에디터에서 업로드된 이미지들의 upload ID 배열',
+    example: [1, 2, 3],
+    required: false,
+    type: [Number]
+  })
+  @IsOptional()
+  boardImages?: any;
 }
