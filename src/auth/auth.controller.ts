@@ -91,11 +91,18 @@ export class AuthController {
       }
     }
   })
-  status(@Req() req: Request) {
-    // req.user가 있으면 로그인된 상태, 없으면 로그인되지 않은 상태
-    if (req.user) {
-      const { password: _unusedPassword, ...userWithoutPassword } = req.user as any;
-      return { loggedIn: true, user: userWithoutPassword };
+  async status(@Req() req: Request) {
+    // Authorization 헤더에서 토큰 추출
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { loggedIn: false, user: null };
+    }
+
+    const token = authHeader.substring(7); // 'Bearer ' 제거
+    const user = await this.authService.verifyToken(token);
+    
+    if (user) {
+      return { loggedIn: true, user };
     } else {
       return { loggedIn: false, user: null };
     }

@@ -120,6 +120,3 @@ jobs:
            # Save PM2 configuration
            pm2 save
            
-           # Setup PM2 to start on boot
-           pm2 startup
-          

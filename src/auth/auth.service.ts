@@ -35,4 +35,17 @@ export class AuthService {
     };
     return this.jwtService.sign(payload);
   }
+
+  async verifyToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.findUserById(payload.sub);
+      if (!user) return null;
+      
+      const { password: _unusedPassword, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      return null;
+    }
+  }
 }
