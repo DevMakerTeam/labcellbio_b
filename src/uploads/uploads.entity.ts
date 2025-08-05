@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
+import { Banner } from '../banner/banner.entity';
 
 @Entity('uploads')
 export class Upload {
@@ -29,9 +30,17 @@ export class Upload {
   @Column({ nullable: true })
   boardId?: number;
 
+  @Column({ nullable: true })
+  bannerId?: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // 관계 설정
+  @ManyToOne(() => Banner, banner => banner.upload)
+  @JoinColumn({ name: 'banner_id' })
+  banner: Banner;
 } 

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Query, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Param, Delete, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody, ApiConsumes, ApiParam } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
 import { UploadsService } from './uploads.service';
@@ -72,11 +73,10 @@ export class UploadsController {
     };
   }
 
-  // 직접 파일 업로드 (기존 방식) - Presigned URL 방식으로 사용용
-  /*
+  // 직접 파일 업로드 (배너 이미지용)
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: '파일 직접 업로드', description: '백엔드를 통해 S3에 파일을 직접 업로드합니다.' })
+  @ApiOperation({ summary: '파일 직접 업로드', description: '백엔드를 통해 S3에 파일을 직접 업로드합니다. (배너 이미지용)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -90,7 +90,7 @@ export class UploadsController {
       }
     }
   })
-  @ApiResponse({ status: 201, description: '업로드 성공', type: UploadResponseDto })
+  @ApiResponse({ status: 201, description: '업로드 성공' })
   @ApiResponse({ status: 400, description: '파일이 없거나 잘못된 요청' })
   async uploadFile(@UploadedFile() file: any) {
     // 파일 검증
@@ -126,7 +126,6 @@ export class UploadsController {
       mimetype: file.mimetype
     };
   }
-  */
 
 
   // 업로드된 파일 목록 조회

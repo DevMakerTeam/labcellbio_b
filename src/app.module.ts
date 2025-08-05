@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { BoardModule } from './board/board.module';
+import { BannerModule } from './banner/banner.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BoardModule } from './board/board.module';
     AuthModule,
     UploadsModule,
     BoardModule,
+    BannerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
