@@ -16,7 +16,7 @@ export class Banner {
     example: '메인 배너',
     maxLength: 255
   })
-  @Column({ length: 255 })
+  @Column({ name: 'title', length: 255 })
   title: string;
 
   @ApiProperty({
@@ -58,8 +58,13 @@ export class Banner {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @ApiProperty({
+    description: '연결된 업로드 정보',
+    type: () => Upload,
+    required: false
+  })
   // 관계 설정 (1:1)
   @OneToOne(() => Upload, upload => upload.banner)
-  @JoinColumn({ name: 'banner_id' })
+  @JoinColumn({ name: 'upload_id' })
   upload: Upload;
 } 

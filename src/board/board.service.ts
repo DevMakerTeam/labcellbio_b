@@ -44,6 +44,35 @@ export class BoardService {
   }
 
   async update(id: number, dto: UpdateBoardDto): Promise<Board> {
+    // 기존 게시글 조회
+    const existingBoard = await this.findOne(id);
+    
+    // 기존 썸네일이 있고, 새로운 썸네일로 변경되는 경우 기존 이미지 삭제
+    if (existingBoard.thumbnail && dto.thumbnail && existingBoard.thumbnail !== dto.thumbnail) {
+      try {
+        const thumbnailKey = this.extractS3KeyFromUrl(existingBoard.thumbnail);
+        if (thumbnailKey) {
+          await this.s3Service.deleteFile(thumbnailKey);
+          console.log(`기존 썸네일 이미지 삭제 완료: ${thumbnailKey}`);
+        }
+      } catch (error) {
+        console.error(`기존 썸네일 이미지 S3 삭제 실패: ${existingBoard.thumbnail}`, error);
+      }
+    }
+    
+    // 기존 작성자 이미지가 있고, 새로운 작성자 이미지로 변경되는 경우 기존 이미지 삭제
+    if (existingBoard.authorImage && dto.authorImage && existingBoard.authorImage !== dto.authorImage) {
+      try {
+        const authorImageKey = this.extractS3KeyFromUrl(existingBoard.authorImage);
+        if (authorImageKey) {
+          await this.s3Service.deleteFile(authorImageKey);
+          console.log(`기존 작성자 이미지 삭제 완료: ${authorImageKey}`);
+        }
+      } catch (error) {
+        console.error(`기존 작성자 이미지 S3 삭제 실패: ${existingBoard.authorImage}`, error);
+      }
+    }
+
     await this.boardRepository.update(id, dto);
     const updatedBoard = await this.findOne(id);
     
@@ -51,12 +80,49 @@ export class BoardService {
     await this.updateImageBoardId(updatedBoard);
     
     // 텍스트 에디터에서 업로드된 이미지들을 BoardImage에 연결
-    if (dto.boardImages && dto.boardImages.length > 0) {
+    if (dto.boardImages) {
+      // 기존 BoardImage 연결들 조회
+      const existingBoardImages = await this.boardImageRepository.find({
+        where: { boardId: id }
+      });
+      
+      // 기존 uploadId들과 새로운 uploadId들 비교
+      const existingUploadIds = existingBoardImages.map(bi => bi.uploadId);
+      const newUploadIds = dto.boardImages || [];
+      
+      // 제거될 uploadId들 (기존에 있지만 새로운 배열에 없는 것들)
+      const removedUploadIds = existingUploadIds.filter(id => !newUploadIds.includes(id));
+      
+      // 제거될 이미지들 S3에서 삭제
+      if (removedUploadIds.length > 0) {
+        const uploadsToDelete = await this.uploadRepository.find({
+          where: { id: In(removedUploadIds), isDeleted: false }
+        });
+        
+        for (const upload of uploadsToDelete) {
+          try {
+            await this.s3Service.deleteFile(upload.s3Key);
+            console.log(`제거된 텍스트 에디터 이미지 삭제 완료: ${upload.s3Key}`);
+          } catch (error) {
+            console.error(`제거된 텍스트 에디터 이미지 S3 삭제 실패: ${upload.s3Key}`, error);
+          }
+        }
+        
+        // DB에서 소프트 삭제
+        await this.uploadRepository.update(
+          { id: In(removedUploadIds) },
+          { isDeleted: true }
+        );
+        console.log(`제거된 텍스트 에디터 이미지 DB 소프트 삭제 완료: uploadIds ${removedUploadIds.join(', ')}`);
+      }
+      
       // 기존 BoardImage 연결 삭제
       await this.boardImageRepository.delete({ boardId: id });
       
       // 새로운 BoardImage 연결 생성
-      await this.createBoardImages(id, dto.boardImages);
+      if (newUploadIds.length > 0) {
+        await this.createBoardImages(id, newUploadIds);
+      }
     }
     
     return updatedBoard;

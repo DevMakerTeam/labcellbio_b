@@ -33,4 +33,6 @@ export class UpdateBannerDto extends PartialType(CreateBannerDto) {
     required: false
   })
   displayOrder?: number;
+
+
 } 

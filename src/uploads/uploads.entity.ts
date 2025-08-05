@@ -6,37 +6,34 @@ export class Upload {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'filename' })
   filename: string;
 
-  @Column()
+  @Column({ name: 'original_name' })
   originalName: string;
 
-  @Column()
+  @Column({ name: 'file_url' })
   fileUrl: string;
 
-  @Column()
+  @Column({ name: 's3_key' })
   s3Key: string;
 
-  @Column()
+  @Column({ name: 'content_type' })
   contentType: string;
 
-  @Column('bigint')
+  @Column({ name: 'file_size', type: 'bigint' })
   fileSize: number;
 
-  @Column({ default: false })
+  @Column({ name: 'is_deleted', default: false })
   isDeleted: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'board_id', nullable: true })
   boardId?: number;
 
-  @Column({ nullable: true })
-  bannerId?: number;
-
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   // 관계 설정

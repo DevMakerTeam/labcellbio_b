@@ -34,6 +34,8 @@ export class CreateBannerDto {
   @MaxLength(500, { message: '배너 이미지 URL은 500자를 초과할 수 없습니다.' })
   bannerImage?: string;
 
+
+
   @ApiProperty({
     description: '노출 순서 (생성 시 자동으로 마지막 순서로 설정됨)',
     example: 1,

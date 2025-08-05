@@ -22,12 +22,16 @@ export class BannerService {
       order: { 
         displayOrder: 'ASC',
         createdAt: 'ASC'  // displayOrder가 같으면 생성일시 순
-      }
+      },
+      relations: ['upload']
     });
   }
 
   findOne(id: number): Promise<Banner> {
-    return this.bannerRepository.findOneByOrFail({ id });
+    return this.bannerRepository.findOneOrFail({
+      where: { id },
+      relations: ['upload']
+    });
   }
 
   async create(dto: CreateBannerDto): Promise<Banner> {
@@ -42,18 +46,60 @@ export class BannerService {
     const banner = this.bannerRepository.create(dto);
     const savedBanner = await this.bannerRepository.save(banner);
     
-    // bannerImage의 bannerId 업데이트
-    await this.updateImageBannerId(savedBanner);
+    // bannerImage URL로 uploadId 찾아서 연결
+    if (dto.bannerImage) {
+      const upload = await this.uploadRepository.findOne({
+        where: { fileUrl: dto.bannerImage, isDeleted: false }
+      });
+      if (upload) {
+        await this.bannerRepository.update(
+          { id: savedBanner.id },
+          { upload: upload }
+        );
+        console.log(`배너와 업로드 연결 완료: bannerId ${savedBanner.id} -> uploadId ${upload.id}`);
+      }
+    }
     
     return savedBanner;
   }
 
   async update(id: number, dto: UpdateBannerDto): Promise<Banner> {
+    // 기존 배너 조회 (upload 관계 포함)
+    const existingBanner = await this.findOne(id);
+    
+    // 기존 이미지가 있고, 새로운 이미지로 변경되는 경우 기존 이미지 삭제
+    if (existingBanner.upload && dto.bannerImage && existingBanner.bannerImage !== dto.bannerImage) {
+      try {
+        await this.s3Service.deleteFile(existingBanner.upload.s3Key);
+        console.log(`기존 배너 이미지 삭제 완료: ${existingBanner.upload.s3Key}`);
+      } catch (error) {
+        console.error(`기존 배너 이미지 S3 삭제 실패: ${existingBanner.upload.s3Key}`, error);
+      }
+      
+      // DB에서 소프트 삭제
+      await this.uploadRepository.update(
+        { id: existingBanner.upload.id },
+        { isDeleted: true }
+      );
+      console.log(`기존 배너 이미지 DB 소프트 삭제 완료: uploadId ${existingBanner.upload.id}`);
+    }
+
     await this.bannerRepository.update(id, dto);
     const updatedBanner = await this.findOne(id);
     
-    // bannerImage의 bannerId 업데이트
-    await this.updateImageBannerId(updatedBanner);
+    // bannerImage URL로 uploadId 찾아서 연결
+    if (dto.bannerImage) {
+      const upload = await this.uploadRepository.findOne({
+        where: { fileUrl: dto.bannerImage, isDeleted: false }
+      });
+      if (upload) {
+        await this.bannerRepository.update(
+          { id: updatedBanner.id },
+          { upload: upload }
+        );
+        console.log(`배너와 업로드 연결 완료: bannerId ${updatedBanner.id} -> uploadId ${upload.id}`);
+      }
+    }
     
     return updatedBanner;
   }
@@ -71,29 +117,27 @@ export class BannerService {
   }
 
   async remove(id: number): Promise<{ message: string }> {
-    // 배너 조회 (이미지 URL 확인을 위해)
-    const banner = await this.bannerRepository.findOneBy({ id });
+    // 배너 조회 (upload 관계 포함)
+    const banner = await this.bannerRepository.findOne({
+      where: { id },
+      relations: ['upload']
+    });
     if (!banner) {
       throw new NotFoundException('배너를 찾을 수 없습니다.');
     }
 
-    // bannerId로 연결된 업로드 조회 (1:1 관계)
-    const bannerUpload = await this.uploadRepository.findOne({
-      where: { bannerId: id, isDeleted: false }
-    });
-    
-    // 연결된 이미지 삭제 (S3에서 실제 삭제 + DB 소프트 삭제)
-    if (bannerUpload) {
+    // 연결된 업로드 이미지 삭제 (S3에서 실제 삭제 + DB 소프트 삭제)
+    if (banner.upload) {
       try {
-        await this.s3Service.deleteFile(bannerUpload.s3Key);
-        console.log(`배너 이미지 삭제 완료: ${bannerUpload.s3Key}`);
+        await this.s3Service.deleteFile(banner.upload.s3Key);
+        console.log(`배너 이미지 삭제 완료: ${banner.upload.s3Key}`);
       } catch (error) {
-        console.error(`S3 파일 삭제 실패: ${bannerUpload.s3Key}`, error);
+        console.error(`S3 파일 삭제 실패: ${banner.upload.s3Key}`, error);
       }
       
       // DB에서 소프트 삭제
       await this.uploadRepository.update(
-        { id: bannerUpload.id },
+        { id: banner.upload.id },
         { isDeleted: true }
       );
     }
@@ -121,25 +165,7 @@ export class BannerService {
     return { message: '배너와 관련 이미지들이 성공적으로 삭제되었습니다.' };
   }
 
-  /**
-   * bannerImage의 bannerId를 업데이트하는 메서드
-   */
-  private async updateImageBannerId(banner: Banner): Promise<void> {
-    if (banner.bannerImage) {
-      const bannerImageKey = this.extractS3KeyFromUrl(banner.bannerImage);
-      if (bannerImageKey) {
-        try {
-          await this.uploadRepository.update(
-            { s3Key: bannerImageKey },
-            { bannerId: banner.id }
-          );
-          console.log(`배너 이미지 bannerId 업데이트 완료: ${bannerImageKey} -> bannerId: ${banner.id}`);
-        } catch (error) {
-          console.error(`배너 이미지 bannerId 업데이트 실패: ${bannerImageKey}`, error);
-        }
-      }
-    }
-  }
+
 
   /**
    * S3 URL에서 S3 키를 추출하는 헬퍼 메서드
