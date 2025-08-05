@@ -122,6 +122,4 @@ jobs:
            
            # Setup PM2 to start on boot
            pm2 startup
-           
-           # Show logs
-           pm2 logs labcellbio-backend --lines 20 
+          

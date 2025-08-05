@@ -68,30 +68,36 @@ export class AuthController {
   }
   
   @Get('status')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ 
     summary: '인증 상태 확인', 
-    description: 'JWT 토큰을 사용하여 현재 로그인 상태를 확인합니다. 유효한 토큰이 필요하며, Authorization 헤더에 Bearer 토큰을 포함해야 합니다.' 
+    description: '현재 로그인 상태를 확인합니다. 토큰이 있으면 사용자 정보를, 없으면 로그인되지 않은 상태를 반환합니다.' 
   })
-  @ApiSecurity('bearer')
   @ApiResponse({ 
     status: 200, 
     description: '인증 상태 반환', 
-    type: AuthStatusDto 
-  })
-  @ApiResponse({ 
-    status: 401, 
-    description: '인증되지 않음 - 토큰이 없거나 만료됨',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Unauthorized' }
+        loggedIn: { type: 'boolean' },
+        user: { 
+          type: 'object',
+          nullable: true,
+          properties: {
+            id: { type: 'number' },
+            username: { type: 'string' },
+            email: { type: 'string' }
+          }
+        }
       }
     }
   })
   status(@Req() req: Request) {
-    // JWT 가드를 통과했다면 이미 인증된 상태
-    const { password: _unusedPassword, ...userWithoutPassword } = req.user as any;
-    return { loggedIn: true, user: userWithoutPassword };
+    // req.user가 있으면 로그인된 상태, 없으면 로그인되지 않은 상태
+    if (req.user) {
+      const { password: _unusedPassword, ...userWithoutPassword } = req.user as any;
+      return { loggedIn: true, user: userWithoutPassword };
+    } else {
+      return { loggedIn: false, user: null };
+    }
   }
 }
