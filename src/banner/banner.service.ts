@@ -19,7 +19,10 @@ export class BannerService {
 
   findAll(): Promise<Banner[]> {
     return this.bannerRepository.find({
-      order: { displayOrder: 'ASC' }
+      order: { 
+        displayOrder: 'ASC',
+        createdAt: 'ASC'  // displayOrder가 같으면 생성일시 순
+      }
     });
   }
 
@@ -28,6 +31,14 @@ export class BannerService {
   }
 
   async create(dto: CreateBannerDto): Promise<Banner> {
+    // displayOrder가 지정되지 않았으면 마지막 순서로 설정
+    if (dto.displayOrder === undefined) {
+      const lastBanner = await this.bannerRepository.findOne({
+        order: { displayOrder: 'DESC' }
+      });
+      dto.displayOrder = lastBanner ? lastBanner.displayOrder + 1 : 1;
+    }
+
     const banner = this.bannerRepository.create(dto);
     const savedBanner = await this.bannerRepository.save(banner);
     

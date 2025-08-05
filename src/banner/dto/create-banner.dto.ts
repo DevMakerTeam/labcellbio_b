@@ -35,7 +35,7 @@ export class CreateBannerDto {
   bannerImage?: string;
 
   @ApiProperty({
-    description: '노출 순서',
+    description: '노출 순서 (생성 시 자동으로 마지막 순서로 설정됨)',
     example: 1,
     required: false
   })

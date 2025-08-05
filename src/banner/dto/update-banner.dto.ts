@@ -28,7 +28,7 @@ export class UpdateBannerDto extends PartialType(CreateBannerDto) {
   bannerImage?: string;
 
   @ApiProperty({
-    description: '노출 순서 (수정 시 선택사항)',
+    description: '노출 순서는 별도 배치 API를 통해 수정하세요',
     example: 2,
     required: false
   })

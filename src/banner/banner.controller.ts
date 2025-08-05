@@ -88,7 +88,15 @@ export class BannerController {
         value: {
           title: '메인 배너',
           subTitle: '서브 타이틀',
-          bannerImage: 'https://example.com/banner.jpg',
+          bannerImage: 'https://example.com/banner.jpg'
+        }
+      },
+      example2: {
+        summary: 'displayOrder 지정 배너 생성',
+        value: {
+          title: '우선 배너',
+          subTitle: '가장 먼저 보여질 배너',
+          bannerImage: 'https://example.com/priority-banner.jpg',
           displayOrder: 1
         }
       }
@@ -123,15 +131,14 @@ export class BannerController {
   })
   @ApiBody({
     type: UpdateBannerDto,
-    description: '배너 수정 정보',
+    description: '배너 수정 정보 (노출 순서는 별도 배치 API 사용)',
     examples: {
       example1: {
-        summary: '배너 수정',
+        summary: '배너 내용 수정',
         value: {
           title: '수정된 배너 제목',
           subTitle: '수정된 서브 타이틀',
-          bannerImage: 'https://example.com/new-banner.jpg',
-          displayOrder: 2
+          bannerImage: 'https://example.com/new-banner.jpg'
         }
       }
     }
@@ -161,7 +168,7 @@ export class BannerController {
   @Patch('display-orders/batch')
   @ApiOperation({
     summary: '배너 노출 순서 일괄 수정',
-    description: '드래그 앤 드롭으로 변경된 배너들의 노출 순서를 일괄 수정합니다.'
+    description: '드래그 앤 드롭으로 변경된 배너들의 노출 순서를 일괄 수정합니다. (개별 배너 수정 시에는 사용하지 마세요)'
   })
   @ApiBody({
     description: '배너 노출 순서 배열',
