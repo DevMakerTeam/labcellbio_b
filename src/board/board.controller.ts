@@ -86,11 +86,13 @@ export class BoardController {
       example1: {
         summary: '기본 게시글 생성',
         value: {
-          writerName: '작성자명',
-          title: '게시글 제목',
-          content: '게시글 내용입니다.',
-          thumbnailUrl: 'https://example.com/thumbnail.jpg'
-        }
+            author: '작성자명',
+            authorImage: 'https://example.com/author.jpg',
+            title: '게시글 제목',
+            description: '게시글 설명',
+            content: '게시글 내용입니다.',
+            thumbnail: 'https://example.com/thumbnail.jpg'
+          }
       }
     }
   })
@@ -128,9 +130,12 @@ export class BoardController {
       example1: {
         summary: '게시글 수정',
         value: {
+          author: '수정된 작성자명',
+          authorImage: 'https://example.com/new-author.jpg',
           title: '수정된 제목',
+          description: '수정된 설명',
           content: '수정된 내용입니다.',
-          thumbnailUrl: 'https://example.com/new-thumbnail.jpg'
+          thumbnail: 'https://example.com/new-thumbnail.jpg'
         }
       }
     }

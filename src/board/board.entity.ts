@@ -23,8 +23,22 @@ export class Board {
     example: '홍길동',
     maxLength: 100
   })
-  @Column({ name: 'writer_name', type: 'varchar', length: 100 })
-  writerName: string;
+  @Column({ name: 'author', type: 'varchar', length: 100 })
+  author: string;
+
+  @ApiProperty({
+    description: '작성자 이미지 URL',
+    example: 'https://example.com/author.jpg',
+    required: false,
+    maxLength: 500
+  })
+  @Column({
+    name: 'author_image',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
+  authorImage?: string;
 
   @ApiProperty({
     description: '게시글 제목',
@@ -33,6 +47,14 @@ export class Board {
   })
   @Column({ name: 'title', type: 'varchar', length: 255 })
   title: string;
+
+  @ApiProperty({
+    description: '게시글 설명',
+    example: '이 게시글에 대한 간단한 설명입니다.',
+    maxLength: 500
+  })
+  @Column({ name: 'description', type: 'varchar', length: 500, nullable: true })
+  description?: string;
 
   @ApiProperty({
     description: '게시글 내용',
@@ -48,12 +70,12 @@ export class Board {
     maxLength: 500
   })
   @Column({
-    name: 'thumbnail_url',
+    name: 'thumbnail',
     type: 'varchar',
     length: 500,
     nullable: true,
   })
-  thumbnailUrl?: string;
+  thumbnail?: string;
 
   @ApiProperty({
     description: '게시글에 포함된 이미지들',

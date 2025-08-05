@@ -9,7 +9,15 @@ export class UpdateBoardDto extends PartialType(CreateBoardDto) {
     maxLength: 100,
     required: false
   })
-  writerName?: string;
+  author?: string;
+
+  @ApiProperty({
+    description: '작성자 이미지 URL (수정 시 선택사항)',
+    example: 'https://example.com/author.jpg',
+    required: false,
+    maxLength: 500
+  })
+  authorImage?: string;
 
   @ApiProperty({
     description: '게시글 제목 (수정 시 선택사항)',
@@ -18,6 +26,14 @@ export class UpdateBoardDto extends PartialType(CreateBoardDto) {
     required: false
   })
   title?: string;
+
+  @ApiProperty({
+    description: '게시글 설명 (수정 시 선택사항)',
+    example: '수정된 설명입니다.',
+    required: false,
+    maxLength: 500
+  })
+  description?: string;
 
   @ApiProperty({
     description: '게시글 내용 (수정 시 선택사항)',
@@ -32,5 +48,5 @@ export class UpdateBoardDto extends PartialType(CreateBoardDto) {
     required: false,
     maxLength: 500
   })
-  thumbnailUrl?: string;
+  thumbnail?: string;
 }
