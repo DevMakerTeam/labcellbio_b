@@ -1,27 +1,36 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { Board } from './board.entity';
 import { Upload } from '../uploads/uploads.entity';
 
 @Entity('board_images')
 export class BoardImage {
+  @ApiProperty({
+    description: '게시글 이미지 고유 ID',
+    example: 1
+  })
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'board_id' })
+  @ApiProperty({
+    description: '게시글 ID',
+    example: 1
+  })
+  @Column()
   boardId: number;
 
-  @Column({ name: 'upload_id' })
+  @ApiProperty({
+    description: '업로드 ID',
+    example: 1
+  })
+  @Column()
   uploadId: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  // 관계 설정
   @ManyToOne(() => Board, board => board.boardImages)
-  @JoinColumn({ name: 'board_id' })
+  @JoinColumn({ name: 'boardId' })
   board: Board;
 
   @ManyToOne(() => Upload)
-  @JoinColumn({ name: 'upload_id' })
+  @JoinColumn({ name: 'uploadId' })
   upload: Upload;
 } 

@@ -11,6 +11,7 @@ import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './board.entity';
+import { BoardResponseDto } from './dto/board-response.dto';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -36,13 +37,13 @@ export class BoardController {
   })
   @ApiOkResponse({
     description: '게시글 목록 조회 성공',
-    type: [Board]
+    type: [BoardResponseDto]
   })
   @ApiResponse({
     status: 500,
     description: '서버 내부 오류'
   })
-  findAll(): Promise<Board[]> {
+  findAll(): Promise<BoardResponseDto[]> {
     return this.boardService.findAll();
   }
 
@@ -60,7 +61,7 @@ export class BoardController {
   })
   @ApiOkResponse({
     description: '게시글 조회 성공',
-    type: Board
+    type: BoardResponseDto
   })
   @ApiNotFoundResponse({
     description: '게시글을 찾을 수 없음'
@@ -69,7 +70,7 @@ export class BoardController {
     status: 500,
     description: '서버 내부 오류'
   })
-  findOne(@Param('id') id: number): Promise<Board> {
+  findOne(@Param('id') id: number): Promise<BoardResponseDto> {
     return this.boardService.findOne(id);
   }
 
@@ -144,7 +145,7 @@ export class BoardController {
   })
   @ApiOkResponse({
     description: '게시글 수정 성공',
-    type: Board
+    type: BoardResponseDto
   })
   @ApiNotFoundResponse({
     description: '게시글을 찾을 수 없음'
@@ -159,7 +160,7 @@ export class BoardController {
   update(
     @Param('id') id: number,
     @Body() updateBoardDto: UpdateBoardDto,
-  ): Promise<Board> {
+  ): Promise<BoardResponseDto> {
     return this.boardService.update(id, updateBoardDto);
   }
 

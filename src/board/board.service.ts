@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 import { Board } from './board.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { BoardResponseDto, BoardImageResponseDto } from './dto/board-response.dto';
 import { Upload } from '../uploads/uploads.entity';
 import { BoardImage } from './board-image.entity';
 import { S3Service } from '../s3/s3.service';
@@ -20,12 +21,60 @@ export class BoardService {
     private readonly s3Service: S3Service,
   ) {}
 
-  findAll(): Promise<Board[]> {
-    return this.boardRepository.find();
+  async findAll(): Promise<BoardResponseDto[]> {
+    const boards = await this.boardRepository.find({
+      relations: ['boardImages', 'boardImages.upload']
+    });
+    
+    return boards.map(board => {
+      const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
+        id: boardImage.id,
+        fileUrl: boardImage.upload?.fileUrl || null
+      })) || [];
+      
+      return {
+        id: board.id,
+        author: board.author,
+        authorImage: board.authorImage,
+        title: board.title,
+        description: board.description,
+        content: board.content,
+        thumbnail: board.thumbnail,
+        boardImages,
+        createdAt: board.createdAt,
+        updatedAt: board.updatedAt
+      };
+    });
   }
 
-  findOne(id: number): Promise<Board> {
-    return this.boardRepository.findOneByOrFail({ id });
+  async findOne(id: number): Promise<BoardResponseDto> {
+    const board = await this.boardRepository.findOne({
+      where: { id },
+      relations: ['boardImages', 'boardImages.upload']
+    });
+    
+    if (!board) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다.');
+    }
+    
+    // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
+    const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
+      id: boardImage.id,
+      fileUrl: boardImage.upload?.fileUrl || null
+    })) || [];
+    
+    return {
+      id: board.id,
+      author: board.author,
+      authorImage: board.authorImage,
+      title: board.title,
+      description: board.description,
+      content: board.content,
+      thumbnail: board.thumbnail,
+      boardImages,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt
+    };
   }
 
   async create(dto: CreateBoardDto): Promise<Board> {
@@ -43,9 +92,16 @@ export class BoardService {
     return savedBoard;
   }
 
-  async update(id: number, dto: UpdateBoardDto): Promise<Board> {
-    // 기존 게시글 조회
-    const existingBoard = await this.findOne(id);
+  async update(id: number, dto: UpdateBoardDto): Promise<BoardResponseDto> {
+    // 기존 게시글 조회 (썸네일과 작성자 이미지 URL 확인을 위해)
+    const existingBoard = await this.boardRepository.findOne({
+      where: { id },
+      relations: ['boardImages', 'boardImages.upload']
+    });
+    
+    if (!existingBoard) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다.');
+    }
     
     // 기존 썸네일이 있고, 새로운 썸네일로 변경되는 경우 기존 이미지 삭제
     if (existingBoard.thumbnail && dto.thumbnail && existingBoard.thumbnail !== dto.thumbnail) {
@@ -74,7 +130,14 @@ export class BoardService {
     }
 
     await this.boardRepository.update(id, dto);
-    const updatedBoard = await this.findOne(id);
+    const updatedBoard = await this.boardRepository.findOne({
+      where: { id },
+      relations: ['boardImages', 'boardImages.upload']
+    });
+    
+    if (!updatedBoard) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다.');
+    }
     
     // thumbnail과 authorImage의 boardId 업데이트
     await this.updateImageBoardId(updatedBoard);
@@ -125,7 +188,24 @@ export class BoardService {
       }
     }
     
-    return updatedBoard;
+    // 응답 DTO 형태로 변환하여 반환
+    const boardImages: BoardImageResponseDto[] = updatedBoard.boardImages?.map(boardImage => ({
+      id: boardImage.id,
+      fileUrl: boardImage.upload?.fileUrl || null
+    })) || [];
+    
+    return {
+      id: updatedBoard.id,
+      author: updatedBoard.author,
+      authorImage: updatedBoard.authorImage,
+      title: updatedBoard.title,
+      description: updatedBoard.description,
+      content: updatedBoard.content,
+      thumbnail: updatedBoard.thumbnail,
+      boardImages,
+      createdAt: updatedBoard.createdAt,
+      updatedAt: updatedBoard.updatedAt
+    };
   }
 
   async remove(id: number): Promise<{ message: string }> {
