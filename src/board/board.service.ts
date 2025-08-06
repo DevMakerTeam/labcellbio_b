@@ -77,7 +77,7 @@ export class BoardService {
     };
   }
 
-  async create(dto: CreateBoardDto): Promise<Board> {
+  async create(dto: CreateBoardDto): Promise<BoardResponseDto> {
     const board = this.boardRepository.create(dto);
     const savedBoard = await this.boardRepository.save(board);
     
@@ -89,7 +89,34 @@ export class BoardService {
       await this.createBoardImages(savedBoard.id, dto.boardImages);
     }
     
-    return savedBoard;
+    // 생성된 게시글을 다시 조회하여 boardImages 관계를 포함하여 반환
+    const createdBoard = await this.boardRepository.findOne({
+      where: { id: savedBoard.id },
+      relations: ['boardImages', 'boardImages.upload']
+    });
+    
+    if (!createdBoard) {
+      throw new NotFoundException('생성된 게시글을 찾을 수 없습니다.');
+    }
+    
+    // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
+    const boardImages: BoardImageResponseDto[] = createdBoard.boardImages?.map(boardImage => ({
+      id: boardImage.id,
+      fileUrl: boardImage.upload?.fileUrl || null
+    })) || [];
+    
+    return {
+      id: createdBoard.id,
+      author: createdBoard.author,
+      authorImage: createdBoard.authorImage,
+      title: createdBoard.title,
+      description: createdBoard.description,
+      content: createdBoard.content,
+      thumbnail: createdBoard.thumbnail,
+      boardImages,
+      createdAt: createdBoard.createdAt,
+      updatedAt: createdBoard.updatedAt
+    };
   }
 
   async update(id: number, dto: UpdateBoardDto): Promise<BoardResponseDto> {

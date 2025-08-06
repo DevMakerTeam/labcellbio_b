@@ -100,7 +100,7 @@ export class BoardController {
   })
   @ApiCreatedResponse({
     description: '게시글 생성 성공',
-    type: Board
+    type: BoardResponseDto
   })
   @ApiBadRequestResponse({
     description: '잘못된 요청 데이터'
@@ -109,7 +109,7 @@ export class BoardController {
     status: 500,
     description: '서버 내부 오류'
   })
-  create(@Body() createBoardDto: CreateBoardDto): Promise<Board> {
+  create(@Body() createBoardDto: CreateBoardDto): Promise<BoardResponseDto> {
     return this.boardService.create(createBoardDto);
   }
 
