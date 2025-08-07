@@ -45,10 +45,15 @@ export class BoardService {
     });
     
     const boardResponses = boards.map(board => {
-      const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
+      // isDeleted = false인 이미지만 필터링
+      const activeBoardImages = board.boardImages?.filter(boardImage => 
+        boardImage.upload && !boardImage.upload.isDeleted
+      ) || [];
+      
+      const boardImages: BoardImageResponseDto[] = activeBoardImages.map(boardImage => ({
         id: boardImage.uploadId,
         fileUrl: boardImage.upload?.fileUrl || null
-      })) || [];
+      }));
       
       return {
         id: board.id,
@@ -85,11 +90,16 @@ export class BoardService {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
     }
     
+    // isDeleted = false인 이미지만 필터링
+    const activeBoardImages = board.boardImages?.filter(boardImage => 
+      boardImage.upload && !boardImage.upload.isDeleted
+    ) || [];
+    
     // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
-    const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
+    const boardImages: BoardImageResponseDto[] = activeBoardImages.map(boardImage => ({
       id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
-    })) || [];
+    }));
     
     return {
       id: board.id,
@@ -128,11 +138,16 @@ export class BoardService {
       throw new NotFoundException('생성된 게시글을 찾을 수 없습니다.');
     }
     
+    // isDeleted = false인 이미지만 필터링
+    const activeBoardImages = createdBoard.boardImages?.filter(boardImage => 
+      boardImage.upload && !boardImage.upload.isDeleted
+    ) || [];
+    
     // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
-    const boardImages: BoardImageResponseDto[] = createdBoard.boardImages?.map(boardImage => ({
+    const boardImages: BoardImageResponseDto[] = activeBoardImages.map(boardImage => ({
       id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
-    })) || [];
+    }));
     
     return {
       id: createdBoard.id,
@@ -245,11 +260,16 @@ export class BoardService {
       }
     }
     
+    // isDeleted = false인 이미지만 필터링
+    const activeBoardImages = updatedBoard.boardImages?.filter(boardImage => 
+      boardImage.upload && !boardImage.upload.isDeleted
+    ) || [];
+    
     // 응답 DTO 형태로 변환하여 반환
-    const boardImages: BoardImageResponseDto[] = updatedBoard.boardImages?.map(boardImage => ({
+    const boardImages: BoardImageResponseDto[] = activeBoardImages.map(boardImage => ({
       id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
-    })) || [];
+    }));
     
     return {
       id: updatedBoard.id,
