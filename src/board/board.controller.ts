@@ -61,7 +61,7 @@ export class BoardController {
     description: '서버 내부 오류'
   })
   findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedBoardResponseDto> {
-    const { page = 1, pageSize = 10 } = paginationDto;
+    const { page, pageSize } = paginationDto;
     return this.boardService.findAll(page, pageSize);
   }
 

@@ -22,22 +22,26 @@ export class BoardService {
     private readonly s3Service: S3Service,
   ) {}
 
-  async findAll(page: number = 1, pageSize: number = 10): Promise<PaginatedBoardResponseDto> {
+  async findAll(page?: number, pageSize?: number): Promise<PaginatedBoardResponseDto> {
+    // 기본값 설정
+    const currentPage = page || 1;
+    const currentPageSize = pageSize || 10;
+    
     // 전체 게시글 수 조회
     const total = await this.boardRepository.count();
     
     // 페이지네이션 계산
-    const skip = (page - 1) * pageSize;
-    const totalPages = Math.ceil(total / pageSize);
-    const hasPrevious = page > 1;
-    const hasNext = page < totalPages;
+    const skip = (currentPage - 1) * currentPageSize;
+    const totalPages = Math.ceil(total / currentPageSize);
+    const hasPrevious = currentPage > 1;
+    const hasNext = currentPage < totalPages;
     
     // 페이지네이션된 게시글 조회
     const boards = await this.boardRepository.find({
       relations: ['boardImages', 'boardImages.upload'],
       order: { createdAt: 'DESC' }, // 최신 게시글부터
       skip,
-      take: pageSize
+      take: currentPageSize
     });
     
     const boardResponses = boards.map(board => {
@@ -63,8 +67,8 @@ export class BoardService {
     return {
       boards: boardResponses,
       total,
-      page,
-      pageSize,
+      page: currentPage,
+      pageSize: currentPageSize,
       totalPages,
       hasPrevious,
       hasNext

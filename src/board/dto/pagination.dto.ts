@@ -7,19 +7,17 @@ export class PaginationDto {
   @ApiProperty({
     description: '페이지 번호 (1부터 시작)',
     example: 1,
-    default: 1,
     required: false
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number = 1;
+  page?: number;
 
   @ApiProperty({
     description: '페이지당 게시글 수',
     example: 10,
-    default: 10,
     required: false
   })
   @IsOptional()
@@ -27,7 +25,7 @@ export class PaginationDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  pageSize?: number = 10;
+  pageSize?: number;
 }
 
 export class PaginatedBoardResponseDto {
@@ -55,7 +53,7 @@ export class PaginatedBoardResponseDto {
           }
         },
         createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' }
+          updatedAt: { type: 'string', format: 'date-time' }
       }
     }
   })
