@@ -22,19 +22,17 @@ export class Banner {
   @ApiProperty({
     description: '배너 부제목',
     example: '서브 타이틀',
-    required: false,
     maxLength: 500
   })
-  @Column({ name: 'sub_title', length: 500, nullable: true })
+  @Column({ name: 'sub_title', length: 500 })
   subTitle: string;
 
   @ApiProperty({
     description: '배너 이미지 URL',
     example: 'https://example.com/banner.jpg',
-    required: false,
     maxLength: 500
   })
-  @Column({ name: 'banner_image', length: 500, nullable: true })
+  @Column({ name: 'banner_image', length: 500 })
   bannerImage: string;
 
   @ApiProperty({

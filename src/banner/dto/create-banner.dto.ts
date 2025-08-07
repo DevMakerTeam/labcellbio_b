@@ -15,24 +15,22 @@ export class CreateBannerDto {
   @ApiProperty({
     description: '배너 부제목',
     example: '서브 타이틀',
-    required: false,
     maxLength: 500
   })
-  @IsOptional()
+  @IsNotEmpty({ message: '부제목은 필수입니다.' })
   @IsString({ message: '부제목은 문자열이어야 합니다.' })
   @MaxLength(500, { message: '부제목은 500자를 초과할 수 없습니다.' })
-  subTitle?: string;
+  subTitle: string;
 
   @ApiProperty({
     description: '배너 이미지 URL',
     example: 'https://example.com/banner.jpg',
-    required: false,
     maxLength: 500
   })
-  @IsOptional()
+  @IsNotEmpty({ message: '배너 이미지 URL은 필수입니다.' })
   @IsString({ message: '배너 이미지 URL은 문자열이어야 합니다.' })
   @MaxLength(500, { message: '배너 이미지 URL은 500자를 초과할 수 없습니다.' })
-  bannerImage?: string;
+  bannerImage: string;
 
 
 
