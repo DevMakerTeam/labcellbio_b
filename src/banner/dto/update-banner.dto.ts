@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty, MaxLength, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, MaxLength, IsNumber, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateBannerDto {
