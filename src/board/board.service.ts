@@ -46,7 +46,7 @@ export class BoardService {
     
     const boardResponses = boards.map(board => {
       const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
-        id: boardImage.id,
+        id: boardImage.uploadId,
         fileUrl: boardImage.upload?.fileUrl || null
       })) || [];
       
@@ -87,7 +87,7 @@ export class BoardService {
     
     // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
     const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
-      id: boardImage.id,
+      id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
     })) || [];
     
@@ -106,15 +106,16 @@ export class BoardService {
   }
 
   async create(dto: CreateBoardDto): Promise<BoardResponseDto> {
-    const board = this.boardRepository.create(dto);
+    const { boardImages: uploadIds, ...boardData } = dto;
+    const board = this.boardRepository.create(boardData);
     const savedBoard = await this.boardRepository.save(board);
     
     // thumbnail과 authorImage의 boardId 업데이트
     await this.updateImageBoardId(savedBoard);
     
     // 텍스트 에디터에서 업로드된 이미지들을 BoardImage에 연결
-    if (dto.boardImages && dto.boardImages.length > 0) {
-      await this.createBoardImages(savedBoard.id, dto.boardImages);
+    if (uploadIds && uploadIds.length > 0) {
+      await this.createBoardImages(savedBoard.id, uploadIds);
     }
     
     // 생성된 게시글을 다시 조회하여 boardImages 관계를 포함하여 반환
@@ -129,7 +130,7 @@ export class BoardService {
     
     // boardImages에서 id와 fileUrl만 선택하여 응답 DTO 형태로 변환
     const boardImages: BoardImageResponseDto[] = createdBoard.boardImages?.map(boardImage => ({
-      id: boardImage.id,
+      id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
     })) || [];
     
@@ -184,7 +185,8 @@ export class BoardService {
       }
     }
 
-    await this.boardRepository.update(id, dto);
+    const { boardImages: uploadIds, ...updateData } = dto;
+    await this.boardRepository.update(id, updateData);
     const updatedBoard = await this.boardRepository.findOne({
       where: { id },
       relations: ['boardImages', 'boardImages.upload']
@@ -198,7 +200,7 @@ export class BoardService {
     await this.updateImageBoardId(updatedBoard);
     
     // 텍스트 에디터에서 업로드된 이미지들을 BoardImage에 연결
-    if (dto.boardImages) {
+    if (uploadIds && Array.isArray(uploadIds)) {
       // 기존 BoardImage 연결들 조회
       const existingBoardImages = await this.boardImageRepository.find({
         where: { boardId: id }
@@ -206,7 +208,7 @@ export class BoardService {
       
       // 기존 uploadId들과 새로운 uploadId들 비교
       const existingUploadIds = existingBoardImages.map(bi => bi.uploadId);
-      const newUploadIds = dto.boardImages || [];
+      const newUploadIds = uploadIds;
       
       // 제거될 uploadId들 (기존에 있지만 새로운 배열에 없는 것들)
       const removedUploadIds = existingUploadIds.filter(id => !newUploadIds.includes(id));
@@ -245,7 +247,7 @@ export class BoardService {
     
     // 응답 DTO 형태로 변환하여 반환
     const boardImages: BoardImageResponseDto[] = updatedBoard.boardImages?.map(boardImage => ({
-      id: boardImage.id,
+      id: boardImage.uploadId,
       fileUrl: boardImage.upload?.fileUrl || null
     })) || [];
     

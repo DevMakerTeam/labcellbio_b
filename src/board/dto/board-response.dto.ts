@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class BoardImageResponseDto {
   @ApiProperty({
-    description: '게시글 이미지 ID',
+    description: '업로드 ID (Upload 테이블의 ID)',
     example: 1
   })
   id: number;
