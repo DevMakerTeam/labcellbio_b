@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsNotEmpty, MaxLength, IsNumber, ValidateIf } from 'class-validator';
+import { IsOptional, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmptyThenString, IsNotEmptyThenStringMaxLength } from './custom-validators';
 
 export class CreateBannerDto {
   @ApiProperty({
@@ -7,9 +8,7 @@ export class CreateBannerDto {
     example: '메인 배너',
     maxLength: 255
   })
-  @IsNotEmpty({ message: '제목은 필수입니다.' })
-  @IsString({ message: '제목은 문자열이어야 합니다.' })
-  @MaxLength(255, { message: '제목은 255자를 초과할 수 없습니다.' })
+  @IsNotEmptyThenStringMaxLength(255, { message: '제목은 필수입니다.' })
   title: string;
 
   @ApiProperty({
@@ -17,9 +16,7 @@ export class CreateBannerDto {
     example: '서브 타이틀',
     maxLength: 500
   })
-  @IsNotEmpty({ message: '부제목은 필수입니다.' })
-  @IsString({ message: '부제목은 문자열이어야 합니다.' })
-  @MaxLength(500, { message: '부제목은 500자를 초과할 수 없습니다.' })
+  @IsNotEmptyThenStringMaxLength(500, { message: '부제목은 필수입니다.' })
   subTitle: string;
 
   @ApiProperty({
@@ -27,9 +24,7 @@ export class CreateBannerDto {
     example: 'https://example.com/banner.jpg',
     maxLength: 500
   })
-  @IsNotEmpty({ message: '배너 이미지 URL은 필수입니다.' })
-  @IsString({ message: '배너 이미지 URL은 문자열이어야 합니다.' })
-  @MaxLength(500, { message: '배너 이미지 URL은 500자를 초과할 수 없습니다.' })
+  @IsNotEmptyThenStringMaxLength(500, { message: '배너 이미지 URL은 필수입니다.' })
   bannerImage: string;
 
 
