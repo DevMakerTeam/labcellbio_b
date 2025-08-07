@@ -35,32 +35,68 @@ export class BannerService {
   }
 
   async create(dto: CreateBannerDto): Promise<Banner> {
+    console.log('배너 생성 시작:', dto);
+    
     // displayOrder가 지정되지 않았으면 마지막 순서로 설정
     if (dto.displayOrder === undefined) {
-      const lastBanner = await this.bannerRepository.findOne({
-        order: { displayOrder: 'DESC' }
-      });
+      console.log('displayOrder가 지정되지 않음, 마지막 순서 계산 중...');
+      const lastBanner = await this.bannerRepository
+        .createQueryBuilder('banner')
+        .orderBy('banner.displayOrder', 'DESC')
+        .getOne();
       dto.displayOrder = lastBanner ? lastBanner.displayOrder + 1 : 1;
+      console.log('계산된 displayOrder:', dto.displayOrder);
     }
 
-    const banner = this.bannerRepository.create(dto);
-    const savedBanner = await this.bannerRepository.save(banner);
-    
-    // bannerImage URL로 uploadId 찾아서 연결
+    // bannerImage URL로 uploadId 찾기
+    let uploadId: number | null = null;
     if (dto.bannerImage) {
-      const upload = await this.uploadRepository.findOne({
-        where: { fileUrl: dto.bannerImage, isDeleted: false }
+      console.log('bannerImage URL로 upload 찾는 중:', dto.bannerImage);
+      const uploads = await this.uploadRepository.find({
+        where: { fileUrl: dto.bannerImage, isDeleted: false },
+        take: 1
       });
-      if (upload) {
-        await this.bannerRepository.update(
-          { id: savedBanner.id },
-          { upload: upload }
-        );
-        console.log(`배너와 업로드 연결 완료: bannerId ${savedBanner.id} -> uploadId ${upload.id}`);
+      console.log('찾은 uploads:', uploads);
+      if (uploads.length > 0) {
+        uploadId = uploads[0].id;
+        console.log('찾은 uploadId:', uploadId);
+      } else {
+        console.log('해당 fileUrl을 가진 upload를 찾을 수 없음');
       }
     }
+
+    // 배너 생성
+    console.log('배너 생성 데이터:', {
+      title: dto.title,
+      subTitle: dto.subTitle,
+      bannerImage: dto.bannerImage,
+      displayOrder: dto.displayOrder
+    });
     
-    return savedBanner;
+    const banner = this.bannerRepository.create({
+      title: dto.title,
+      subTitle: dto.subTitle,
+      bannerImage: dto.bannerImage,
+      displayOrder: dto.displayOrder
+    });
+    
+    console.log('생성된 banner 객체:', banner);
+    const savedBanner = await this.bannerRepository.save(banner);
+    console.log('저장된 banner:', savedBanner);
+    
+    // upload 관계 설정 (uploadId가 있는 경우)
+    if (uploadId) {
+      await this.bannerRepository
+        .createQueryBuilder()
+        .update(Banner)
+        .set({ upload: { id: uploadId } })
+        .where("id = :id", { id: savedBanner.id })
+        .execute();
+      console.log(`배너와 업로드 연결 완료: bannerId ${savedBanner.id} -> uploadId ${uploadId}`);
+    }
+    
+    // 관계 정보를 포함하여 반환
+    return this.findOne(savedBanner.id);
   }
 
   async update(id: number, dto: UpdateBannerDto): Promise<Banner> {
@@ -89,14 +125,19 @@ export class BannerService {
     
     // bannerImage URL로 uploadId 찾아서 연결
     if (dto.bannerImage) {
-      const upload = await this.uploadRepository.findOne({
-        where: { fileUrl: dto.bannerImage, isDeleted: false }
+      const uploads = await this.uploadRepository.find({
+        where: { fileUrl: dto.bannerImage, isDeleted: false },
+        take: 1
       });
-      if (upload) {
-        await this.bannerRepository.update(
-          { id: updatedBanner.id },
-          { upload: upload }
-        );
+      if (uploads.length > 0) {
+        const upload = uploads[0];
+        // 관계 설정을 위해 QueryBuilder 사용
+        await this.bannerRepository
+          .createQueryBuilder()
+          .update(Banner)
+          .set({ upload: { id: upload.id } })
+          .where("id = :id", { id: updatedBanner.id })
+          .execute();
         console.log(`배너와 업로드 연결 완료: bannerId ${updatedBanner.id} -> uploadId ${upload.id}`);
       }
     }
