@@ -11,14 +11,7 @@ async function bootstrap() {
   logger.log('애플리케이션 시작 중...');
 
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      stopAtFirstError: true, // 첫 번째 validation 에러에서 중단
-    })
-  ); // ★ 이게 있어야 유효성 검사 작동
+  app.useGlobalPipes(new ValidationPipe()); // ★ 이게 있어야 유효성 검사 작동
   // ✅ CORS 설정
   app.enableCors({
     // origin: true, // 또는 'http://localhost:3000'
