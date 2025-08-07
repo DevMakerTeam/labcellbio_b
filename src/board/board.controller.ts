@@ -6,12 +6,14 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { BoardService } from './board.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Board } from './board.entity';
 import { BoardResponseDto } from './dto/board-response.dto';
+import { PaginationDto, PaginatedBoardResponseDto } from './dto/pagination.dto';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -21,7 +23,8 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
-  ApiBadRequestResponse
+  ApiBadRequestResponse,
+  ApiQuery
 } from '@nestjs/swagger';
 
 @ApiTags('board')
@@ -29,22 +32,37 @@ import {
 export class BoardController {
   constructor(private readonly boardService: BoardService) {}
 
-  // 게시글 전체 조회
+  // 게시글 전체 조회 (페이지네이션 지원)
   @Get()
   @ApiOperation({
     summary: '게시글 전체 조회',
-    description: '모든 게시글 목록을 조회합니다.'
+    description: '페이지네이션을 지원하는 게시글 목록을 조회합니다. 최신 게시글부터 정렬됩니다.'
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '페이지 번호 (1부터 시작)',
+    required: false,
+    type: Number,
+    example: 1
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    description: '페이지당 게시글 수',
+    required: false,
+    type: Number,
+    example: 10
   })
   @ApiOkResponse({
     description: '게시글 목록 조회 성공',
-    type: [BoardResponseDto]
+    type: PaginatedBoardResponseDto
   })
   @ApiResponse({
     status: 500,
     description: '서버 내부 오류'
   })
-  findAll(): Promise<BoardResponseDto[]> {
-    return this.boardService.findAll();
+  findAll(@Query() paginationDto: PaginationDto): Promise<PaginatedBoardResponseDto> {
+    const { page = 1, pageSize = 10 } = paginationDto;
+    return this.boardService.findAll(page, pageSize);
   }
 
   // 게시글 단건 조회

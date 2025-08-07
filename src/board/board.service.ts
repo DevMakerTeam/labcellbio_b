@@ -5,6 +5,7 @@ import { Board } from './board.entity';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { BoardResponseDto, BoardImageResponseDto } from './dto/board-response.dto';
+import { PaginatedBoardResponseDto } from './dto/pagination.dto';
 import { Upload } from '../uploads/uploads.entity';
 import { BoardImage } from './board-image.entity';
 import { S3Service } from '../s3/s3.service';
@@ -21,12 +22,25 @@ export class BoardService {
     private readonly s3Service: S3Service,
   ) {}
 
-  async findAll(): Promise<BoardResponseDto[]> {
+  async findAll(page: number = 1, pageSize: number = 10): Promise<PaginatedBoardResponseDto> {
+    // 전체 게시글 수 조회
+    const total = await this.boardRepository.count();
+    
+    // 페이지네이션 계산
+    const skip = (page - 1) * pageSize;
+    const totalPages = Math.ceil(total / pageSize);
+    const hasPrevious = page > 1;
+    const hasNext = page < totalPages;
+    
+    // 페이지네이션된 게시글 조회
     const boards = await this.boardRepository.find({
-      relations: ['boardImages', 'boardImages.upload']
+      relations: ['boardImages', 'boardImages.upload'],
+      order: { createdAt: 'DESC' }, // 최신 게시글부터
+      skip,
+      take: pageSize
     });
     
-    return boards.map(board => {
+    const boardResponses = boards.map(board => {
       const boardImages: BoardImageResponseDto[] = board.boardImages?.map(boardImage => ({
         id: boardImage.id,
         fileUrl: boardImage.upload?.fileUrl || null
@@ -45,6 +59,16 @@ export class BoardService {
         updatedAt: board.updatedAt
       };
     });
+    
+    return {
+      boards: boardResponses,
+      total,
+      page,
+      pageSize,
+      totalPages,
+      hasPrevious,
+      hasNext
+    };
   }
 
   async findOne(id: number): Promise<BoardResponseDto> {
