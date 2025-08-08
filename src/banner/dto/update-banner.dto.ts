@@ -20,12 +20,20 @@ export class UpdateBannerDto {
   subTitle: string;
 
   @ApiProperty({
-    description: '배너 이미지 URL',
+    description: '배너 데스크톱 이미지 URL',
     example: 'https://example.com/new-banner.jpg',
     maxLength: 500
   })
-  @IsNotEmptyThenStringMaxLength(500, { message: '배너 이미지 URL은 필수입니다.' })
+  @IsNotEmptyThenStringMaxLength(500, { message: '배너 데스크톱 이미지 URL은 필수입니다.' })
   bannerImage: string;
+
+  @ApiProperty({
+    description: '배너 모바일 이미지 URL',
+    example: 'https://example.com/new-banner-mobile.jpg',
+    maxLength: 500
+  })
+  @IsNotEmptyThenStringMaxLength(500, { message: '배너 모바일 이미지 URL은 필수입니다.' })
+  bannerMobileImage: string;
 
   @ApiProperty({
     description: '배너 링크 URL',

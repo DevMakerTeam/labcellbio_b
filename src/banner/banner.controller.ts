@@ -89,6 +89,7 @@ export class BannerController {
           title: '메인 배너',
           subTitle: '서브 타이틀',
           bannerImage: 'https://example.com/banner.jpg',
+          bannerMobileImage: 'https://example.com/banner-mobile.jpg',
           link: 'https://example.com',
           targetBlank: false
         }
@@ -99,6 +100,7 @@ export class BannerController {
           title: '우선 배너',
           subTitle: '가장 먼저 보여질 배너',
           bannerImage: 'https://example.com/priority-banner.jpg',
+          bannerMobileImage: 'https://example.com/priority-banner-mobile.jpg',
           link: 'https://example.com/priority',
           targetBlank: true,
           displayOrder: 1
@@ -143,6 +145,7 @@ export class BannerController {
           title: '수정된 배너 제목',
           subTitle: '수정된 서브 타이틀',
           bannerImage: 'https://example.com/new-banner.jpg',
+          bannerMobileImage: 'https://example.com/new-banner-mobile.jpg',
           link: 'https://example.com/updated',
           targetBlank: true
         }
@@ -153,6 +156,7 @@ export class BannerController {
           title: '기존 배너 제목',
           subTitle: '기존 서브 타이틀',
           bannerImage: 'https://example.com/existing-banner.jpg',
+          bannerMobileImage: 'https://example.com/existing-banner-mobile.jpg',
           link: 'https://example.com/new-link',
           targetBlank: false
         }

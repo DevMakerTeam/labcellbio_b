@@ -23,14 +23,14 @@ export class BannerService {
         displayOrder: 'ASC',
         createdAt: 'ASC'  // displayOrder가 같으면 생성일시 순
       },
-      relations: ['upload']
+      relations: ['desktopUpload', 'mobileUpload']
     });
   }
 
   findOne(id: number): Promise<Banner> {
     return this.bannerRepository.findOneOrFail({
       where: { id },
-      relations: ['upload']
+      relations: ['desktopUpload', 'mobileUpload']
     });
   }
 
@@ -48,20 +48,37 @@ export class BannerService {
       console.log('계산된 displayOrder:', dto.displayOrder);
     }
 
-    // bannerImage URL로 uploadId 찾기
-    let uploadId: number | null = null;
+    // bannerImage URL로 desktop uploadId 찾기
+    let desktopUploadId: number | null = null;
     if (dto.bannerImage) {
-      console.log('bannerImage URL로 upload 찾는 중:', dto.bannerImage);
+      console.log('bannerImage URL로 desktop upload 찾는 중:', dto.bannerImage);
       const uploads = await this.uploadRepository.find({
         where: { fileUrl: dto.bannerImage, isDeleted: false },
         take: 1
       });
-      console.log('찾은 uploads:', uploads);
+      console.log('찾은 desktop uploads:', uploads);
       if (uploads.length > 0) {
-        uploadId = uploads[0].id;
-        console.log('찾은 uploadId:', uploadId);
+        desktopUploadId = uploads[0].id;
+        console.log('찾은 desktop uploadId:', desktopUploadId);
       } else {
-        console.log('해당 fileUrl을 가진 upload를 찾을 수 없음');
+        console.log('해당 fileUrl을 가진 desktop upload를 찾을 수 없음');
+      }
+    }
+
+    // bannerMobileImage URL로 mobile uploadId 찾기
+    let mobileUploadId: number | null = null;
+    if (dto.bannerMobileImage) {
+      console.log('bannerMobileImage URL로 mobile upload 찾는 중:', dto.bannerMobileImage);
+      const uploads = await this.uploadRepository.find({
+        where: { fileUrl: dto.bannerMobileImage, isDeleted: false },
+        take: 1
+      });
+      console.log('찾은 mobile uploads:', uploads);
+      if (uploads.length > 0) {
+        mobileUploadId = uploads[0].id;
+        console.log('찾은 mobile uploadId:', mobileUploadId);
+      } else {
+        console.log('해당 fileUrl을 가진 mobile upload를 찾을 수 없음');
       }
     }
 
@@ -70,6 +87,9 @@ export class BannerService {
       title: dto.title,
       subTitle: dto.subTitle,
       bannerImage: dto.bannerImage,
+      bannerMobileImage: dto.bannerMobileImage,
+      link: dto.link,
+      targetBlank: dto.targetBlank,
       displayOrder: dto.displayOrder
     });
     
@@ -77,6 +97,9 @@ export class BannerService {
       title: dto.title,
       subTitle: dto.subTitle,
       bannerImage: dto.bannerImage,
+      bannerMobileImage: dto.bannerMobileImage,
+      link: dto.link,
+      targetBlank: dto.targetBlank,
       displayOrder: dto.displayOrder
     });
     
@@ -84,15 +107,26 @@ export class BannerService {
     const savedBanner = await this.bannerRepository.save(banner);
     console.log('저장된 banner:', savedBanner);
     
-    // upload 관계 설정 (uploadId가 있는 경우)
-    if (uploadId) {
+    // desktop upload 관계 설정 (desktopUploadId가 있는 경우)
+    if (desktopUploadId) {
       await this.bannerRepository
         .createQueryBuilder()
         .update(Banner)
-        .set({ upload: { id: uploadId } })
+        .set({ desktopUpload: { id: desktopUploadId } })
         .where("id = :id", { id: savedBanner.id })
         .execute();
-      console.log(`배너와 업로드 연결 완료: bannerId ${savedBanner.id} -> uploadId ${uploadId}`);
+      console.log(`배너와 데스크톱 업로드 연결 완료: bannerId ${savedBanner.id} -> desktopUploadId ${desktopUploadId}`);
+    }
+
+    // mobile upload 관계 설정 (mobileUploadId가 있는 경우)
+    if (mobileUploadId) {
+      await this.bannerRepository
+        .createQueryBuilder()
+        .update(Banner)
+        .set({ mobileUpload: { id: mobileUploadId } })
+        .where("id = :id", { id: savedBanner.id })
+        .execute();
+      console.log(`배너와 모바일 업로드 연결 완료: bannerId ${savedBanner.id} -> mobileUploadId ${mobileUploadId}`);
     }
     
     // 관계 정보를 포함하여 반환
@@ -103,27 +137,44 @@ export class BannerService {
     // 기존 배너 조회 (upload 관계 포함)
     const existingBanner = await this.findOne(id);
     
-    // 기존 이미지가 있고, 새로운 이미지로 변경되는 경우 기존 이미지 삭제
-    if (existingBanner.upload && dto.bannerImage && existingBanner.bannerImage !== dto.bannerImage) {
+    // 기존 데스크톱 이미지가 있고, 새로운 이미지로 변경되는 경우 기존 이미지 삭제
+    if (existingBanner.desktopUpload && dto.bannerImage && existingBanner.bannerImage !== dto.bannerImage) {
       try {
-        await this.s3Service.deleteFile(existingBanner.upload.s3Key);
-        console.log(`기존 배너 이미지 삭제 완료: ${existingBanner.upload.s3Key}`);
+        await this.s3Service.deleteFile(existingBanner.desktopUpload.s3Key);
+        console.log(`기존 배너 데스크톱 이미지 삭제 완료: ${existingBanner.desktopUpload.s3Key}`);
       } catch (error) {
-        console.error(`기존 배너 이미지 S3 삭제 실패: ${existingBanner.upload.s3Key}`, error);
+        console.error(`기존 배너 데스크톱 이미지 S3 삭제 실패: ${existingBanner.desktopUpload.s3Key}`, error);
       }
       
       // DB에서 소프트 삭제
       await this.uploadRepository.update(
-        { id: existingBanner.upload.id },
+        { id: existingBanner.desktopUpload.id },
         { isDeleted: true }
       );
-      console.log(`기존 배너 이미지 DB 소프트 삭제 완료: uploadId ${existingBanner.upload.id}`);
+      console.log(`기존 배너 데스크톱 이미지 DB 소프트 삭제 완료: uploadId ${existingBanner.desktopUpload.id}`);
+    }
+
+    // 기존 모바일 이미지가 있고, 새로운 이미지로 변경되는 경우 기존 이미지 삭제
+    if (existingBanner.mobileUpload && dto.bannerMobileImage && existingBanner.bannerMobileImage !== dto.bannerMobileImage) {
+      try {
+        await this.s3Service.deleteFile(existingBanner.mobileUpload.s3Key);
+        console.log(`기존 배너 모바일 이미지 삭제 완료: ${existingBanner.mobileUpload.s3Key}`);
+      } catch (error) {
+        console.error(`기존 배너 모바일 이미지 S3 삭제 실패: ${existingBanner.mobileUpload.s3Key}`, error);
+      }
+      
+      // DB에서 소프트 삭제
+      await this.uploadRepository.update(
+        { id: existingBanner.mobileUpload.id },
+        { isDeleted: true }
+      );
+      console.log(`기존 배너 모바일 이미지 DB 소프트 삭제 완료: uploadId ${existingBanner.mobileUpload.id}`);
     }
 
     await this.bannerRepository.update(id, dto);
     const updatedBanner = await this.findOne(id);
     
-    // bannerImage URL로 uploadId 찾아서 연결
+    // bannerImage URL로 desktop uploadId 찾아서 연결
     if (dto.bannerImage) {
       const uploads = await this.uploadRepository.find({
         where: { fileUrl: dto.bannerImage, isDeleted: false },
@@ -135,10 +186,29 @@ export class BannerService {
         await this.bannerRepository
           .createQueryBuilder()
           .update(Banner)
-          .set({ upload: { id: upload.id } })
+          .set({ desktopUpload: { id: upload.id } })
           .where("id = :id", { id: updatedBanner.id })
           .execute();
-        console.log(`배너와 업로드 연결 완료: bannerId ${updatedBanner.id} -> uploadId ${upload.id}`);
+        console.log(`배너와 데스크톱 업로드 연결 완료: bannerId ${updatedBanner.id} -> uploadId ${upload.id}`);
+      }
+    }
+
+    // bannerMobileImage URL로 mobile uploadId 찾아서 연결
+    if (dto.bannerMobileImage) {
+      const uploads = await this.uploadRepository.find({
+        where: { fileUrl: dto.bannerMobileImage, isDeleted: false },
+        take: 1
+      });
+      if (uploads.length > 0) {
+        const upload = uploads[0];
+        // 관계 설정을 위해 QueryBuilder 사용
+        await this.bannerRepository
+          .createQueryBuilder()
+          .update(Banner)
+          .set({ mobileUpload: { id: upload.id } })
+          .where("id = :id", { id: updatedBanner.id })
+          .execute();
+        console.log(`배너와 모바일 업로드 연결 완료: bannerId ${updatedBanner.id} -> uploadId ${upload.id}`);
       }
     }
     
@@ -161,24 +231,40 @@ export class BannerService {
     // 배너 조회 (upload 관계 포함)
     const banner = await this.bannerRepository.findOne({
       where: { id },
-      relations: ['upload']
+      relations: ['desktopUpload', 'mobileUpload']
     });
     if (!banner) {
       throw new NotFoundException('배너를 찾을 수 없습니다.');
     }
 
-    // 연결된 업로드 이미지 삭제 (S3에서 실제 삭제 + DB 소프트 삭제)
-    if (banner.upload) {
+    // 연결된 데스크톱 업로드 이미지 삭제 (S3에서 실제 삭제 + DB 소프트 삭제)
+    if (banner.desktopUpload) {
       try {
-        await this.s3Service.deleteFile(banner.upload.s3Key);
-        console.log(`배너 이미지 삭제 완료: ${banner.upload.s3Key}`);
+        await this.s3Service.deleteFile(banner.desktopUpload.s3Key);
+        console.log(`배너 데스크톱 이미지 삭제 완료: ${banner.desktopUpload.s3Key}`);
       } catch (error) {
-        console.error(`S3 파일 삭제 실패: ${banner.upload.s3Key}`, error);
+        console.error(`S3 데스크톱 파일 삭제 실패: ${banner.desktopUpload.s3Key}`, error);
       }
       
       // DB에서 소프트 삭제
       await this.uploadRepository.update(
-        { id: banner.upload.id },
+        { id: banner.desktopUpload.id },
+        { isDeleted: true }
+      );
+    }
+
+    // 연결된 모바일 업로드 이미지 삭제 (S3에서 실제 삭제 + DB 소프트 삭제)
+    if (banner.mobileUpload) {
+      try {
+        await this.s3Service.deleteFile(banner.mobileUpload.s3Key);
+        console.log(`배너 모바일 이미지 삭제 완료: ${banner.mobileUpload.s3Key}`);
+      } catch (error) {
+        console.error(`S3 모바일 파일 삭제 실패: ${banner.mobileUpload.s3Key}`, error);
+      }
+      
+      // DB에서 소프트 삭제
+      await this.uploadRepository.update(
+        { id: banner.mobileUpload.id },
         { isDeleted: true }
       );
     }
@@ -189,10 +275,22 @@ export class BannerService {
         const bannerImageKey = this.extractS3KeyFromUrl(banner.bannerImage);
         if (bannerImageKey) {
           await this.s3Service.deleteFile(bannerImageKey);
-          console.log(`배너 이미지 삭제 완료: ${bannerImageKey}`);
+          console.log(`배너 데스크톱 이미지 삭제 완료: ${bannerImageKey}`);
         }
       } catch (error) {
-        console.error(`배너 이미지 삭제 실패: ${banner.bannerImage}`, error);
+        console.error(`배너 데스크톱 이미지 삭제 실패: ${banner.bannerImage}`, error);
+      }
+    }
+
+    if (banner.bannerMobileImage) {
+      try {
+        const bannerMobileImageKey = this.extractS3KeyFromUrl(banner.bannerMobileImage);
+        if (bannerMobileImageKey) {
+          await this.s3Service.deleteFile(bannerMobileImageKey);
+          console.log(`배너 모바일 이미지 삭제 완료: ${bannerMobileImageKey}`);
+        }
+      } catch (error) {
+        console.error(`배너 모바일 이미지 삭제 실패: ${banner.bannerMobileImage}`, error);
       }
     }
     
@@ -205,8 +303,6 @@ export class BannerService {
     
     return { message: '배너와 관련 이미지들이 성공적으로 삭제되었습니다.' };
   }
-
-
 
   /**
    * S3 URL에서 S3 키를 추출하는 헬퍼 메서드

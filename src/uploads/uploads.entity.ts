@@ -83,7 +83,9 @@ export class Upload {
   updatedAt: Date;
 
   // 관계 설정
-  @ManyToOne(() => Banner, banner => banner.upload)
-  @JoinColumn({ name: 'banner_id' })
-  banner: Banner;
+  @OneToOne(() => Banner, banner => banner.desktopUpload)
+  desktopBanner: Banner;
+
+  @OneToOne(() => Banner, banner => banner.mobileUpload)
+  mobileBanner: Banner;
 } 

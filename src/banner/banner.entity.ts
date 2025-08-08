@@ -28,12 +28,20 @@ export class Banner {
   subTitle: string;
 
   @ApiProperty({
-    description: '배너 이미지 URL',
+    description: '배너 데스크톱 이미지 URL',
     example: 'https://example.com/banner.jpg',
     maxLength: 500
   })
   @Column({ name: 'banner_image', length: 500 })
   bannerImage: string;
+
+  @ApiProperty({
+    description: '배너 모바일 이미지 URL',
+    example: 'https://example.com/banner-mobile.jpg',
+    maxLength: 500
+  })
+  @Column({ name: 'banner_mobile_image', length: 500 })
+  bannerMobileImage: string;
 
   @ApiProperty({
     description: '배너 링크 URL',
@@ -73,12 +81,22 @@ export class Banner {
   updatedAt: Date;
 
   @ApiProperty({
-    description: '연결된 업로드 정보',
+    description: '연결된 데스크톱 업로드 정보',
     type: () => Upload,
     required: false
   })
-  // 관계 설정 (1:1)
-  @OneToOne(() => Upload, upload => upload.banner)
-  @JoinColumn({ name: 'upload_id' })
-  upload: Upload;
+  // 데스크톱 이미지 관계 설정 (1:1)
+  @OneToOne(() => Upload, upload => upload.desktopBanner)
+  @JoinColumn({ name: 'desktop_upload_id' })
+  desktopUpload: Upload;
+
+  @ApiProperty({
+    description: '연결된 모바일 업로드 정보',
+    type: () => Upload,
+    required: false
+  })
+  // 모바일 이미지 관계 설정 (1:1)
+  @OneToOne(() => Upload, upload => upload.mobileBanner)
+  @JoinColumn({ name: 'mobile_upload_id' })
+  mobileUpload: Upload;
 } 
