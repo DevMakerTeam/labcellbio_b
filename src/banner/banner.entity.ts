@@ -36,6 +36,22 @@ export class Banner {
   bannerImage: string;
 
   @ApiProperty({
+    description: '배너 링크 URL',
+    example: 'https://example.com',
+    maxLength: 500
+  })
+  @Column({ name: 'link', length: 500 })
+  link: string;
+
+  @ApiProperty({
+    description: '새 창에서 링크 열기 여부',
+    example: true,
+    default: false
+  })
+  @Column({ name: 'target_blank', default: false })
+  targetBlank: boolean;
+
+  @ApiProperty({
     description: '노출 순서 (낮은 숫자가 먼저 노출)',
     example: 1
   })

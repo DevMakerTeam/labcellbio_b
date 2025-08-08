@@ -88,7 +88,9 @@ export class BannerController {
         value: {
           title: '메인 배너',
           subTitle: '서브 타이틀',
-          bannerImage: 'https://example.com/banner.jpg'
+          bannerImage: 'https://example.com/banner.jpg',
+          link: 'https://example.com',
+          targetBlank: false
         }
       },
       example2: {
@@ -97,6 +99,8 @@ export class BannerController {
           title: '우선 배너',
           subTitle: '가장 먼저 보여질 배너',
           bannerImage: 'https://example.com/priority-banner.jpg',
+          link: 'https://example.com/priority',
+          targetBlank: true,
           displayOrder: 1
         }
       }
@@ -134,11 +138,23 @@ export class BannerController {
     description: '배너 수정 정보 (노출 순서는 별도 배치 API 사용)',
     examples: {
       example1: {
-        summary: '배너 내용 수정',
+        summary: '배너 내용 전체 수정',
         value: {
           title: '수정된 배너 제목',
           subTitle: '수정된 서브 타이틀',
-          bannerImage: 'https://example.com/new-banner.jpg'
+          bannerImage: 'https://example.com/new-banner.jpg',
+          link: 'https://example.com/updated',
+          targetBlank: true
+        }
+      },
+      example2: {
+        summary: '배너 링크 설정 변경',
+        value: {
+          title: '기존 배너 제목',
+          subTitle: '기존 서브 타이틀',
+          bannerImage: 'https://example.com/existing-banner.jpg',
+          link: 'https://example.com/new-link',
+          targetBlank: false
         }
       }
     }
