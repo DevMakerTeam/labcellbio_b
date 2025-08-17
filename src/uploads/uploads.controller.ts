@@ -54,8 +54,8 @@ export class UploadsController {
   @ApiResponse({ status: 201, description: '업로드 완료', type: CompleteUploadResponseDto })
   async completeUpload(@Body() uploadData: CompleteUploadDto) {
     // S3에 이미 업로드된 파일의 영구 URL 생성
-    const region = process.env.AWS_REGION || 'ap-northeast-2';
-    const bucket = process.env.AWS_S3_BUCKET || 'labcellbio-images';
+    const region = process.env.AWS_REGION || 'ap-southeast-2';
+    const bucket = process.env.AWS_S3_BUCKET || 'labcellbio-image-upload';
     const permanentUrl = `https://${bucket}.s3.${region}.amazonaws.com/${uploadData.s3Key}`;
     
     // DB에 저장 (영구 URL 포함)
